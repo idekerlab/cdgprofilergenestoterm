@@ -57,7 +57,7 @@ setup(
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
     ],
-    scripts=['cdgprofilergenestoterm/cdgprofilergenestoterm.py'],
+    scripts=['cdgprofilergenestoterm/cdgprofilergenestotermcmd.py'],
     test_suite='tests',
     tests_require=test_requirements
 )

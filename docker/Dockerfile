@@ -10,5 +10,5 @@ RUN pip install /tmp/cdgprofiler/cdgprofilergenestoterm*whl
 
 RUN rm -rf /tmp/cdgprofiler
 
-ENTRYPOINT ["/opt/conda/bin/cdgprofilergenestoterm.py"]
+ENTRYPOINT ["/opt/conda/bin/cdgprofilergenestotermcmd.py"]
 CMD ["--help"]

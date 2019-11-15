@@ -7,7 +7,6 @@ import json
 from gprofiler import GProfiler
 import cdgprofilergenestoterm
 
-
 def _parse_arguments(desc, args):
     """
     Parses command line arguments
