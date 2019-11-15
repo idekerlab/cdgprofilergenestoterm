@@ -5,6 +5,7 @@ import sys
 import argparse
 import json
 from gprofiler import GProfiler
+import cdgprofilergenestoterm
 
 
 def _parse_arguments(desc, args):
@@ -37,10 +38,15 @@ def read_inputfile(inputfile):
 
 
 def run_gprofiler(inputfile, theargs,
-                  gprofwrapper=GProfiler(return_dataframe=True)):
+                  gprofwrapper=GProfiler(user_agent='cdgprofilergenestoterm/' +
+                                         cdgprofilergenestoterm.__version__,
+                                         return_dataframe=True)):
     """
     todo
+
     :param inputfile:
+    :param theargs:
+    :param gprofwrapper:
     :return:
     """
     genes = read_inputfile(inputfile)
