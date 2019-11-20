@@ -45,6 +45,7 @@ class TestCdgprofilergenestoterm(unittest.TestCase):
         self.assertEqual('inputarg', res.input)
         self.assertEqual(0.00001, res.maxpval)
         self.assertEqual('hsapiens', res.organism)
+        self.assertEqual(5000, res.maxgenelistsize)
 
     def test_run_gprofiler_no_file(self):
         temp_dir = tempfile.mkdtemp()
@@ -100,6 +101,25 @@ class TestCdgprofilergenestoterm(unittest.TestCase):
         finally:
             shutil.rmtree(temp_dir)
 
+    def test_run_gprofiler_with_too_many_genes(self):
+        temp_dir = tempfile.mkdtemp()
+        try:
+            tfile = os.path.join(temp_dir, 'foo')
+
+            # write out gene file with 5002 genes which
+            # should return None
+            with open(tfile, 'w') as f:
+                for x in range(0, 5001):
+                    f.write(str(x) + ',')
+            myargs = [tfile]
+            theargs = cdgprofilergenestotermcmd._parse_arguments('desc',
+                                                                 myargs)
+            res = cdgprofilergenestotermcmd.run_gprofiler(tfile,
+                                                          theargs)
+            self.assertEqual(None, res)
+        finally:
+            shutil.rmtree(temp_dir)
+
     def test_run_gprofiler_with_valid_result(self):
         temp_dir = tempfile.mkdtemp()
         try:
@@ -135,8 +155,8 @@ class TestCdgprofilergenestoterm(unittest.TestCase):
                                                                  myargs)
             res = cdgprofilergenestotermcmd.run_gprofiler(tfile,
                                                           theargs,
-                                                          gprofwrapper
-                                                       =mygprofiler)
+                                                          gprofwrapper=
+                                                          mygprofiler)
             self.assertEqual('name2', res['name'])
             mygprofiler.profile.assert_called_once_with(query=['a', 'b', 'c'],
                                                         domain_scope='known',

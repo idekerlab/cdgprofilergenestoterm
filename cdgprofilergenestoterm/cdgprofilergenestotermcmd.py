@@ -21,6 +21,11 @@ def _parse_arguments(desc, args):
                         help='comma delimited list of genes in file')
     parser.add_argument('--maxpval', type=float, default=0.00001,
                         help='Max p value')
+    parser.add_argument('--maxgenelistsize', type=int,
+                        default=5000, help='Maximum number of genes that can'
+                                           'be passed in via a query, '
+                                           'exceeding this results in '
+                                           'error')
     parser.add_argument('--organism', default='hsapiens',
                         help='Organism to use')
     return parser.parse_args(args)
@@ -50,8 +55,15 @@ def run_gprofiler(inputfile, theargs,
     """
     genes = read_inputfile(inputfile)
     genes = genes.strip(',').strip('\n').split(',')
-    if genes is None or (len(genes) == 1 and len(genes[0].strip()) == 0):
+    genelist_size = len(genes)
+    if genes is None or (genelist_size == 1 and len(genes[0].strip()) == 0):
         sys.stderr.write('No genes found in input')
+        return None
+    if genelist_size > theargs.maxgenelistsize:
+        sys.stderr.write('Gene list size of ' +
+                         str(genelist_size) +
+                         ' exceeds max gene list size of ' +
+                         str(theargs.maxgenelistsize))
         return None
     df_result = gprofwrapper.profile(query=genes, domain_scope="known",
                                      organism=theargs.organism,
