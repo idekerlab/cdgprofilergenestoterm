@@ -2,6 +2,7 @@ FROM continuumio/miniconda3
 
 RUN pip install pandas
 RUN pip install gprofiler-official
+RUN pip install ijson
 
 RUN mkdir /tmp/cdgprofiler
 COPY dist/*.whl /tmp/cdgprofiler/

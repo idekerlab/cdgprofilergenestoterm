@@ -20,6 +20,7 @@ with open(os.path.join('cdgprofilergenestoterm', '__init__.py')) as ver_file:
 
 requirements = [
     'pandas',
+    'ijson',
     'gprofiler-official'
 ]
 

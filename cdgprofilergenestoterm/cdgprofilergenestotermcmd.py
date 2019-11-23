@@ -3,8 +3,12 @@
 import os
 import sys
 import argparse
+from decimal import *
+import tempfile
 import json
-from gprofiler import GProfiler
+import ijson
+import shutil
+import requests
 import cdgprofilergenestoterm
 
 def _parse_arguments(desc, args):
@@ -28,6 +32,9 @@ def _parse_arguments(desc, args):
                                            'error')
     parser.add_argument('--organism', default='hsapiens',
                         help='Organism to use')
+    parser.add_argument('--tmpdir', default='/tmp',
+                        help='Temp directory')
+    parser.add_argument('--url', default='https://biit.cs.ut.ee/gprofiler/api/gost/profile/')
     return parser.parse_args(args)
 
 
@@ -41,10 +48,7 @@ def read_inputfile(inputfile):
         return f.read()
 
 
-def run_gprofiler(inputfile, theargs,
-                  gprofwrapper=GProfiler(user_agent='cdgprofilergenestoterm/' +
-                                         cdgprofilergenestoterm.__version__,
-                                         return_dataframe=True)):
+def run_gprofiler(inputfile, theargs):
     """
     todo
 
@@ -65,25 +69,53 @@ def run_gprofiler(inputfile, theargs,
                          ' exceeds max gene list size of ' +
                          str(theargs.maxgenelistsize))
         return None
-    df_result = gprofwrapper.profile(query=genes, domain_scope="known",
-                                     organism=theargs.organism,
-                                     user_threshold=theargs.maxpval,
-                                     no_evidences=False)
-    if df_result.shape[0] == 0:
+
+    user_agent = 'cdgprofilergenestoterm/' + cdgprofilergenestoterm.__version__
+
+    result = requests.post(url=theargs.url, json={'organism': theargs.organism,
+                                                  'user_threshold': theargs.maxpval,
+                                                  'no_evidences': False,
+                                                  'domain_scope': 'known',
+                                                  'query': genes},
+                           headers={'User_Agent': user_agent}, stream=True)
+    sys.stdout.write(str(result.headers) + '\n')
+    if result.status_code != 200:
+        sys.stderr.write('Received non 200 status code: ' + str(result.status_code) + '\n')
         return None
 
-    df_result['Jaccard'] = 1.0 / (1.0 / df_result['precision'] +
-                                  1.0 / df_result['recall'] - 1)
-    df_result.sort_values(['Jaccard', 'p_value'],
-                          ascending=[False, True], inplace=True)
-    df_result.reset_index(drop=True, inplace=True)
-    theres = {'name': df_result['name'][0],
-              'source': df_result['source'][0],
-              'p_value': df_result['p_value'][0],
-              'description': df_result['description'][0],
-              'intersections': df_result['intersections'][0]}
+    temp_dir = tempfile.mkdtemp(dir=theargs.tmpdir)
+    try:
 
-    return theres
+        tfile = os.path.join(temp_dir, 'raw.out')
+        with open(tfile, 'wb') as fd:
+            for chunk in result.iter_content(chunk_size=512):
+                fd.write(chunk)
+
+        with open(tfile, 'r') as f:
+            besthit = None
+            for entry in ijson.items(f, 'result.item'):
+                # print(entry)
+                jaccard = Decimal(1.0) / (Decimal(1.0) / entry['precision'] + Decimal(1.0) / entry['recall'] -1)
+
+                if besthit is None or jaccard > besthit['jaccard']:
+                    besthit = entry
+                    besthit['jaccard'] = jaccard
+                    continue
+                if jaccard == besthit['jaccard']:
+                    if entry['p_value'] < besthit['p_value']:
+                        besthit = entry
+                        besthit['jaccard'] = jaccard
+
+        theres = {'name': besthit['name'],
+                  'source': besthit['source'],
+                  'p_value': float(besthit['p_value']),
+                  'description': besthit['description'],
+                  'intersections': besthit['intersections']}
+
+        return theres
+    finally:
+        pass
+        # shutil.rmtree(temp_dir)
 
 
 def main(args):
