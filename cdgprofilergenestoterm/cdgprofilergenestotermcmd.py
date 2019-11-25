@@ -90,6 +90,7 @@ def run_gprofiler(inputfile, theargs):
         with open(tfile, 'wb') as fd:
             for chunk in result.iter_content(chunk_size=512):
                 fd.write(chunk)
+        sys.stderr.write('Received: ' + str(os.path.getsize(tfile)) + ' bytes from gprofiler\n')
 
         with open(tfile, 'r') as f:
             besthit = None
