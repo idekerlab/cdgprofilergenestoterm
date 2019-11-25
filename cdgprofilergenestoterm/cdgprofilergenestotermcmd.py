@@ -110,8 +110,11 @@ def run_gprofiler(inputfile, theargs):
                   'source': besthit['source'],
                   'p_value': float(besthit['p_value']),
                   'description': besthit['description'],
-                  'intersections': besthit['intersections']}
+                  'intersections': []}
 
+        # besthit['intersections'] needs to be obtained from metadata specifically
+        # genes = result['meta']['query'][result['result'][0]['query']]['ensgs']
+        # besthit['intersections'] = ([gene for ev, gene in zip(result['result'][0]['intersections'], genes) if ev])
         return theres
     finally:
         pass
