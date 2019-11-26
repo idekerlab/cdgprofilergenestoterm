@@ -19,13 +19,15 @@ def _parse_arguments(desc, args):
                                      formatter_class=help_fm)
     parser.add_argument('input',
                         help='comma delimited list of genes in file')
-    parser.add_argument('--maxpval', type=float, default=0.00001,
+    parser.add_argument('--maxpval', type=float, default=0.00000001,
                         help='Max p value')
+    parser.add_argument('--omit_intersections', action='store_true',
+                        help='If set, do NOT query for gene intersections')
     parser.add_argument('--maxgenelistsize', type=int,
-                        default=5000, help='Maximum number of genes that can'
-                                           'be passed in via a query, '
-                                           'exceeding this results in '
-                                           'error')
+                        default=500, help='Maximum number of genes that can'
+                                          'be passed in via a query, '
+                                          'exceeding this results in '
+                                          'error')
     parser.add_argument('--organism', default='hsapiens',
                         help='Organism to use')
     return parser.parse_args(args)
@@ -68,7 +70,7 @@ def run_gprofiler(inputfile, theargs,
     df_result = gprofwrapper.profile(query=genes, domain_scope="known",
                                      organism=theargs.organism,
                                      user_threshold=theargs.maxpval,
-                                     no_evidences=False)
+                                     no_evidences=theargs.omit_intersections)
     if df_result.shape[0] == 0:
         return None
 
@@ -76,13 +78,17 @@ def run_gprofiler(inputfile, theargs,
                                   1.0 / df_result['recall'] - 1)
     df_result.sort_values(['Jaccard', 'p_value'],
                           ascending=[False, True], inplace=True)
+
     df_result.reset_index(drop=True, inplace=True)
     theres = {'name': df_result['name'][0],
               'source': df_result['source'][0],
               'p_value': df_result['p_value'][0],
-              'description': df_result['description'][0],
-              'intersections': df_result['intersections'][0]}
+              'description': df_result['description'][0]}
 
+    if theargs.omit_intersections is True:
+        theres['intersections'] = []
+    else:
+        theres['intersections']: df_result['intersections'][0]
     return theres
 
 
