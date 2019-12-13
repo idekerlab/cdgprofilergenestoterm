@@ -43,9 +43,9 @@ class TestCdgprofilergenestoterm(unittest.TestCase):
         res = cdgprofilergenestotermcmd._parse_arguments('desc',
                                                          myargs)
         self.assertEqual('inputarg', res.input)
-        self.assertEqual(0.00001, res.maxpval)
+        self.assertEqual(0.00000001, res.maxpval)
         self.assertEqual('hsapiens', res.organism)
-        self.assertEqual(5000, res.maxgenelistsize)
+        self.assertEqual(500, res.maxgenelistsize)
 
     def test_run_gprofiler_no_file(self):
         temp_dir = tempfile.mkdtemp()
@@ -91,12 +91,12 @@ class TestCdgprofilergenestoterm(unittest.TestCase):
             res = cdgprofilergenestotermcmd.run_gprofiler(tfile,
                                                           theargs,
                                                           gprofwrapper
-                                                       =mygprofiler)
+                                                          =mygprofiler)
             self.assertEqual(None, res)
             mygprofiler.profile.assert_called_once_with(query=['a', 'b', 'c'],
                                                         domain_scope='known',
                                                         organism='hsapiens',
-                                                        user_threshold=0.00001,
+                                                        user_threshold=0.00000001,
                                                         no_evidences=False)
         finally:
             shutil.rmtree(temp_dir)
@@ -131,21 +131,22 @@ class TestCdgprofilergenestoterm(unittest.TestCase):
                                        'description',
                                        'intersections',
                                        'precision',
-                                       'recall'],
+                                       'recall',
+                                       'term_size'],
                               data=[['name1',
                                      'source1',
                                      0.1,
                                      'desc1',
                                      ['hi'],
                                      0.5,
-                                     0.7],
+                                     0.7, 88],
                                     ['name2',
                                      'source2',
                                      0.5,
                                      'desc2',
                                      ['bye'],
                                      0.6,
-                                     0.8]])
+                                     0.8, 99]])
             mygprofiler.profile = MagicMock(return_value=df)
             tfile = os.path.join(temp_dir, 'foo')
             with open(tfile, 'w') as f:
@@ -158,10 +159,14 @@ class TestCdgprofilergenestoterm(unittest.TestCase):
                                                           gprofwrapper=
                                                           mygprofiler)
             self.assertEqual('name2', res['name'])
+            self.assertEqual(['bye'], res['intersections'])
+            self.assertEqual(99, res['term_size'])
+            self.assertEqual(0.5, res['p_value'])
+
             mygprofiler.profile.assert_called_once_with(query=['a', 'b', 'c'],
                                                         domain_scope='known',
                                                         organism='hsapiens',
-                                                        user_threshold=0.00001,
+                                                        user_threshold=0.00000001,
                                                         no_evidences=False)
         finally:
             shutil.rmtree(temp_dir)

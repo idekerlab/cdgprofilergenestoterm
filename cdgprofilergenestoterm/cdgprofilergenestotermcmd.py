@@ -83,12 +83,13 @@ def run_gprofiler(inputfile, theargs,
     theres = {'name': df_result['name'][0],
               'source': df_result['source'][0],
               'p_value': df_result['p_value'][0],
-              'description': df_result['description'][0]}
+              'description': df_result['description'][0],
+              'term_size': int(df_result['term_size'][0])}
 
     if theargs.omit_intersections is True:
         theres['intersections'] = []
     else:
-        theres['intersections']: df_result['intersections'][0]
+        theres['intersections'] = df_result['intersections'][0]
     return theres
 
 
@@ -101,10 +102,25 @@ def main(args):
     :rtype: int
     """
     desc = """
-        Running gprofiler-official 1.0.0, with python3!
+        Using gprofiler-official 1.0.0, Python module, this
+        program takes a file with comma delimited list of genes 
+        as input and outputs best matching term in JSON format to
+        standard out. Any log messages and errors are output to
+        standard error.
+        
+        Return 0 upon success otherwise error.
+        
+        Format of JSON output:
+        
+        {
+         "name":"<TERM NAME>",
+         "source":"<SOURCE, IF ANY, WHERE TERM NAME WAS OBTAINED>",
+         "p_value":<PVALUE>,
+         "description":"<DESCRIPTION, IF ANY, FOR TERM>",
+         "term_size":<NUMBER OF GENES ASSOCIATED WITH TERM>,
+         "intersections":["<LIST OF GENES USED TO GET TERM>"]
+        }
 
-        Takes file with comma delimited list of genes as input and
-        outputs matching term if any
     """
 
     theargs = _parse_arguments(desc, args[1:])
