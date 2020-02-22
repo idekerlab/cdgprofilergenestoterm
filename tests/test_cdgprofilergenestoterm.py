@@ -44,6 +44,7 @@ class TestCdgprofilergenestoterm(unittest.TestCase):
                                                          myargs)
         self.assertEqual('inputarg', res.input)
         self.assertEqual(0.00000001, res.maxpval)
+        self.assertEqual(0.05, res.minoverlap)
         self.assertEqual('hsapiens', res.organism)
         self.assertEqual(500, res.maxgenelistsize)
 
@@ -127,6 +128,7 @@ class TestCdgprofilergenestoterm(unittest.TestCase):
 
             df = pd.DataFrame(columns=['name',
                                        'source',
+                                       'native',
                                        'p_value',
                                        'description',
                                        'intersections',
@@ -135,6 +137,7 @@ class TestCdgprofilergenestoterm(unittest.TestCase):
                                        'term_size'],
                               data=[['name1',
                                      'source1',
+                                     'native1',
                                      0.1,
                                      'desc1',
                                      ['hi'],
@@ -142,6 +145,7 @@ class TestCdgprofilergenestoterm(unittest.TestCase):
                                      0.7, 88],
                                     ['name2',
                                      'source2',
+                                     'native2',
                                      0.5,
                                      'desc2',
                                      ['bye'],
@@ -162,6 +166,8 @@ class TestCdgprofilergenestoterm(unittest.TestCase):
             self.assertEqual(['bye'], res['intersections'])
             self.assertEqual(99, res['term_size'])
             self.assertEqual(0.5, res['p_value'])
+            self.assertEqual('source2', res['source'])
+            self.assertEqual('native2', res['native'])
 
             mygprofiler.profile.assert_called_once_with(query=['a', 'b', 'c'],
                                                         domain_scope='known',

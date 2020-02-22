@@ -21,13 +21,20 @@ def _parse_arguments(desc, args):
                         help='comma delimited list of genes in file')
     parser.add_argument('--maxpval', type=float, default=0.00000001,
                         help='Max p value')
+    parser.add_argument('--minoverlap', default=0.05, type=float,
+                        help='Minimum overlap/Jaccard to allow for hits')
     parser.add_argument('--omit_intersections', action='store_true',
                         help='If set, do NOT query for gene intersections')
+    parser.add_argument('--excludesource', default='HP,MIRNA,TF',
+                        help='Comma delimited list of sources to exclude')
     parser.add_argument('--maxgenelistsize', type=int,
                         default=500, help='Maximum number of genes that can'
                                           'be passed in via a query, '
                                           'exceeding this results in '
                                           'error')
+    parser.add_argument('--precision', type=int, default=3,
+                        help='Number of decimal places to round '
+                             'jaccard')
     parser.add_argument('--organism', default='hsapiens',
                         help='Organism to use')
     return parser.parse_args(args)
@@ -76,13 +83,33 @@ def run_gprofiler(inputfile, theargs,
 
     df_result['Jaccard'] = 1.0 / (1.0 / df_result['precision'] +
                                   1.0 / df_result['recall'] - 1)
+
+    # filter out any rows where min overlap is not met
+    df_result.drop(df_result[df_result.Jaccard < theargs.minoverlap].index,
+                   inplace=True)
+
+    # filter out any rows in source exclude list
+    if theargs.excludesource is not None:
+        for a_source in theargs.excludesource.split(','):
+            df_result.drop(df_result[df_result.source == a_source].index,
+                           inplace=True)
+
+    if df_result.shape[0] == 0:
+        return None
+
+    # sort by Jaccard and fallback to p_value
     df_result.sort_values(['Jaccard', 'p_value'],
                           ascending=[False, True], inplace=True)
 
     df_result.reset_index(drop=True, inplace=True)
+
+    df_result = df_result[:1]
+    df_result = df_result.round({'Jaccard': theargs.precision})
     theres = {'name': df_result['name'][0],
               'source': df_result['source'][0],
+              'native': df_result['native'][0],
               'p_value': df_result['p_value'][0],
+              'jaccard': df_result['Jaccard'][0],
               'description': df_result['description'][0],
               'term_size': int(df_result['term_size'][0])}
 
@@ -113,12 +140,14 @@ def main(args):
         Format of JSON output:
         
         {
-         "name":"<TERM NAME>",
-         "source":"<SOURCE, IF ANY, WHERE TERM NAME WAS OBTAINED>",
-         "p_value":<PVALUE>,
-         "description":"<DESCRIPTION, IF ANY, FOR TERM>",
-         "term_size":<NUMBER OF GENES ASSOCIATED WITH TERM>,
-         "intersections":["<LIST OF GENES USED TO GET TERM>"]
+         "name": "<TERM NAME>",
+         "source": "<IS THE CODE FOR THE DATASOURCE>",
+         "native": "<IS THE ID FOR THE ENRICHED TERM/FUNCTIONAL CATEGORY IN ITS NATIVE NAMESPACE>",
+         "p_value": <PVALUE>,
+         "jaccard": <JACCARD VALUE>,
+         "description": "<DESCRIPTION, IF ANY, FOR TERM>",
+         "term_size": <NUMBER OF GENES ASSOCIATED WITH TERM>,
+         "intersections": ["<LIST OF GENES USED TO GET TERM>"]
         }
 
     """
