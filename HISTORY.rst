@@ -2,6 +2,15 @@
 History
 =======
 
+0.3.0 (2020-02-24)
+---------------------
+
+* Added *--minoverlap* which lets user filter results by Jaccard
+
+* Added *--excludesource* which lets user exclude sources from result
+
+* Changed output to include **sourceTermId** and **jaccard**
+
 0.2.0 (2019-12-12)
 ---------------------
 
