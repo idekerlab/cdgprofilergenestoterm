@@ -22,7 +22,7 @@ def _parse_arguments(desc, args):
     parser.add_argument('--maxpval', type=float, default=0.00000001,
                         help='Max p value')
     parser.add_argument('--minoverlap', default=0.05, type=float,
-                        help='Minimum overlap/Jaccard to allow for hits')
+                        help='Minimum Jaccard to allow for hits')
     parser.add_argument('--omit_intersections', action='store_true',
                         help='If set, do NOT query for gene intersections')
     parser.add_argument('--excludesource', default='HP,MIRNA,TF',
@@ -107,7 +107,7 @@ def run_gprofiler(inputfile, theargs,
     df_result = df_result.round({'Jaccard': theargs.precision})
     theres = {'name': df_result['name'][0],
               'source': df_result['source'][0],
-              'native': df_result['native'][0],
+              'sourceTermId': df_result['native'][0],
               'p_value': df_result['p_value'][0],
               'jaccard': df_result['Jaccard'][0],
               'description': df_result['description'][0],
@@ -141,8 +141,8 @@ def main(args):
         
         {
          "name": "<TERM NAME>",
-         "source": "<IS THE CODE FOR THE DATASOURCE>",
-         "native": "<IS THE ID FOR THE ENRICHED TERM/FUNCTIONAL CATEGORY IN ITS NATIVE NAMESPACE>",
+         "source": "<IS THE NAME FOR THE DATASOURCE>",
+         "sourceTermId": "<IS THE ID FOR THE ENRICHED TERM/FUNCTIONAL CATEGORY IN ITS NATIVE NAMESPACE>",
          "p_value": <PVALUE>,
          "jaccard": <JACCARD VALUE>,
          "description": "<DESCRIPTION, IF ANY, FOR TERM>",
